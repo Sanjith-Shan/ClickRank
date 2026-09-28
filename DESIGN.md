@@ -66,7 +66,37 @@ the inference runtime comparison are Criteo numbers. No figure blends the two.
 
 ## The retrieval stage
 
-(Filled in as each part lands. See the sections below.)
+**Towers.** The ad tower embeds the ad group id, category, campaign, customer, brand and a
+binned price, concatenates them and runs a small MLP to an L2 normalised 64 dimension vector.
+The user tower does the same for the user id and the profile fields, plus the mean of the
+embeddings of the user's last 20 clicked ads before the request time (Covington et al.). The
+score is the dot product of the two, which is cosine similarity.
+
+**Training.** Clicked impressions from days 1 to 7 are the positives. Every other ad in the
+batch is a negative (in batch sampled softmax), and each ad's logit is corrected by the log of
+its estimated sampling probability, from Yi et al.'s streaming frequency estimator. An id with
+no training click keeps a zero embedding instead of its random initial row, so an unseen ad
+is represented by its category, brand and price only.
+
+**Selection, without touching the test day.** The first full run peaked after two epochs and
+then fell as the id embeddings memorised the training clicks. Every choice below was made
+on a separate protocol that trains on days 1 to 6 and validates on day 7, and day 8 was not
+looked at. Each row is the best epoch of that run, from `results/retrieval/two_tower_selection.jsonl`,
+hit rate at 100 over 20,000 day 7 users.
+
+| Variant | Best epoch | Day 7 hit rate@100 |
+| --- | --- | --- |
+| Temperature 0.1 (chosen) | 2 | 0.110 |
+| Base, temperature 0.05 | 2 | 0.108 |
+| 16 dimension id embeddings | 2 | 0.106 |
+| Weight decay 1e-6 | 3 | 0.100 |
+| No click history in the user tower | 3 | 0.098 |
+| No log q correction | 2 | 0.043 |
+
+The sampling bias correction is the largest single effect. Without it the popular ads, which
+appear as in batch negatives far more often than their share of clicks, are pushed down and
+hit rate falls by more than half. The final model uses temperature 0.1 and trains on days 1
+to 7 for exactly two epochs, the epoch count the validation protocol chose.
 
 ## Freshness
 

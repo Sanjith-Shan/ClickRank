@@ -43,7 +43,7 @@ results/*.onnx.data
 results/**/*.npy
 results/**/*.npz
 results/**/*.faiss
-results/**/artifacts/
+results/**/artifacts*/
 
 # Serialized TensorRT engines. These are hundreds of megabytes and are tied to
 # the gpu architecture, the driver, and the TensorRT version that built them, so
@@ -76,3 +76,6 @@ ClickRank_CLAUDE.md
 !data/download.sh
 !results/.gitkeep
 logs/
+
+# Claude Code agent worktrees
+.claude/
