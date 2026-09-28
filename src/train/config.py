@@ -50,10 +50,18 @@ MODEL_CONFIGS: Dict[str, Dict] = {
         "hidden": [512, 256, 128],
         "dropout": 0.3,
     },
+    # TorchRec DLRM. The bottom MLP ends at embed_dim and the top MLP ends at one
+    # logit, both appended by the model. Needs Linux and TorchRec.
+    "dlrm": {
+        **_TRAIN_DEFAULTS,
+        "epochs": 15,
+        "bottom": [256, 128],
+        "top": [256, 128, 64],
+    },
 }
 
 # Canonical order the benchmark runs and reports models in.
-MODEL_ORDER = ["logistic", "fm", "deepfm", "dcn", "dnn"]
+MODEL_ORDER = ["logistic", "fm", "deepfm", "dcn", "dnn", "dlrm"]
 
 
 def get_config(model_name: str) -> Dict:

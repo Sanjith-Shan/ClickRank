@@ -49,6 +49,7 @@ from src.evaluation.metrics import compute_all
 from src.evaluation.report import generate_report
 from src.models.dcn import DCNModel
 from src.models.deepfm import DeepFMModel
+from src.models.dlrm import DLRMModel, torchrec_available
 from src.models.dnn import DNNModel
 from src.models.fm import FMModel
 from src.models.logistic import LogisticModel
@@ -63,11 +64,12 @@ _MODEL_CLASSES = {
     "deepfm": DeepFMModel,
     "dcn": DCNModel,
     "dnn": DNNModel,
+    "dlrm": DLRMModel,
 }
 
 # Names that identify torch backed models. These have a trainable module whose
 # state dict is saved and whose parameters are counted.
-_TORCH_MODELS = {"fm", "deepfm", "dcn", "dnn"}
+_TORCH_MODELS = {"fm", "deepfm", "dcn", "dnn", "dlrm"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -116,7 +118,8 @@ def select_models(models_arg: str) -> list:
     An unknown name raises a clear error rather than failing later.
     """
     if models_arg.strip().lower() == "all":
-        return list(MODEL_ORDER)
+        # DLRM needs TorchRec, which only installs on Linux, so "all" skips it elsewhere.
+        return [m for m in MODEL_ORDER if m != "dlrm" or torchrec_available()]
 
     requested = [m.strip().lower() for m in models_arg.split(",") if m.strip()]
     unknown = [m for m in requested if m not in _MODEL_CLASSES]
