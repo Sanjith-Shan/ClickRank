@@ -19,6 +19,12 @@ data/*.tsv
 data/*.txt
 data/*.gz
 data/*.zip
+# Taobao and Avazu raw files and anything derived from them. The licence
+# terms say code and aggregates only, never the rows.
+data/taobao/
+data/avazu/
+data/synthetic_ids/
+data/*.parquet
 # Model artifacts, at any depth under results. The double star matters because
 # a pulled results directory from a remote run nests one level deeper, and a
 # single star pattern silently fails to match it.
