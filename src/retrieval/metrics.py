@@ -99,3 +99,29 @@ def rank_of(target_score: float, all_scores: np.ndarray) -> float:
     greater = int((s > target_score).sum())
     ties = int((s == target_score).sum()) - 1
     return 1.0 + greater + max(ties, 0) / 2.0
+
+
+def fast_group_auc(y_true: np.ndarray, y_pred: np.ndarray, groups: np.ndarray) -> Dict[str, float]:
+    """Impression weighted GAUC over every group with both classes, in one pass.
+
+    Same definition as src.evaluation.metrics.group_auc, which loops over the
+    groups with a mask each time and is quadratic in practice. This uses the
+    rank sum form of AUC inside each group, with average ranks for ties, so a
+    few million impressions over a few hundred thousand users take seconds.
+    """
+    import pandas as pd
+
+    df = pd.DataFrame({"g": np.asarray(groups), "y": np.asarray(y_true, dtype=np.float64),
+                       "s": np.asarray(y_pred, dtype=np.float64)})
+    df["r"] = df.groupby("g")["s"].rank(method="average")
+    agg = df.groupby("g").agg(n=("y", "size"), p=("y", "sum"),
+                              rp=("r", lambda r: 0.0))
+    agg["rp"] = df[df["y"] > 0].groupby("g")["r"].sum().reindex(agg.index).fillna(0.0)
+    agg["neg"] = agg["n"] - agg["p"]
+    ok = (agg["p"] > 0) & (agg["neg"] > 0)
+    a = agg[ok]
+    auc = (a["rp"] - a["p"] * (a["p"] + 1) / 2) / (a["p"] * a["neg"])
+    w = a["n"]
+    return {"gauc": float((auc * w).sum() / w.sum()) if len(a) else 0.5,
+            "groups_scored": int(ok.sum()), "groups_total": int(len(agg)),
+            "impressions_in_scored_groups": int(w.sum())}
