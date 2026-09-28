@@ -98,6 +98,32 @@ appear as in batch negatives far more often than their share of clicks, are push
 hit rate falls by more than half. The final model uses temperature 0.1 and trains on days 1
 to 7 for exactly two epochs, the epoch count the validation protocol chose.
 
+## What the two stage measurement can and cannot say
+
+Two measurements run on the test day, and they point in opposite directions for a reason
+worth stating.
+
+**Impression level AUC and NE drop when retrieval is added.** Every logged impression is
+scored, and an ad that retrieval did not return ranks below every ad it did return. The
+logged impressions were chosen by the production system that served Taobao in 2017, not by
+this retriever, so at K = 500 retrieval keeps only about 14% of them and 20% of their clicks.
+The other 80% of clicks tie at the bottom with the dropped ads, and AUC over the log falls
+toward 0.5. This metric measures agreement with the logging policy. It
+is reported in `NUMBERS.md` because it is the metric the spec asked for, and it is not the
+number the design is judged on.
+
+**Per request, retrieval is what makes ranking work.** For a sample of test day clicks the
+request is replayed, and the clicked ad's rank is recorded twice. Once when the ranker
+scores all 846,811 ads, and once when it scores only the K the retriever returned. A ranker
+trained on logged impressions has only ever seen ads that some earlier system chose to
+show, so across the whole catalog it cannot tell a plausible ad from an irrelevant one, and
+the clicked ad lands deep in the list. Retrieval removes that problem before ranking starts.
+This is the argument for two stages in Covington et al., measured here, and it is why
+candidate generation is judged by recall and ranking by calibrated scores.
+
+The per request sample is 300 clicks, so its percentages carry roughly plus or minus two
+points at the rates observed. `run_two_stage.py --final-rank-requests` raises it.
+
 ## Freshness
 
 The question and the design are from He et al., *Practical Lessons from Predicting Clicks on
