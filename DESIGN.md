@@ -21,6 +21,10 @@ measurement of the two stage trade on real data.
   Systems* (DLRM), 2019. The family the DeepFM and DCN rankers belong to, and the reason the
   inference work treats them as memory bound.
 
+- TorchRec documentation and `torchrec.models.dlrm.DLRM`, `EmbeddingBagCollection`,
+  `EmbeddingShardingPlanner` and `DistributedModelParallel`. The DLRM row is TorchRec's model,
+  not a reimplementation, and with one GPU the sharding plan is trivial by construction.
+
 **Retrieval**
 
 - Huang et al., *Learning Deep Structured Semantic Models for Web Search using Clickthrough

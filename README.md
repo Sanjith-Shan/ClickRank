@@ -48,6 +48,26 @@ The table below comes from a run on 2 million rows of the real Criteo Display Ad
 
 All four interaction aware models beat the logistic regression baseline on real Criteo data. DeepFM and DCN lead at about 0.787 AUC against 0.718 for logistic regression, a lift of about 0.069 AUC and a drop in normalized entropy from 0.898 to 0.813. On real Criteo the categorical features have very high cardinality, so hash encoding and embeddings are essential, and the high order feature interactions are what separate the deep models from the linear baseline. Every model stays well calibrated with expected calibration error under 0.011. These numbers are in line with published Criteo benchmarks given the bounded 10000 bucket hash space this framework uses to keep memory in check. For fast experiments with no download the benchmark also ships a synthetic generator with built in interactions, selected with the `--synthetic` flag. See the methodology notes below and the dedicated document in `docs/METHODOLOGY.md` for the full reasoning.
 
+### A sixth architecture, DLRM on TorchRec
+
+DLRM (Naumov et al. 2019) is built from TorchRec's own modules, `torchrec.models.dlrm.DLRM` over an `EmbeddingBagCollection` with one table per field, and trains through the same shared trainer on the same 2M Criteo rows, split and seed as the table above. It ran on one rented A100 because TorchRec needs Linux and its fbgemm_gpu kernels. DeepFM was retrained in the same job as the like for like reference.
+
+| Model | AUC | LogLoss | NE | GAUC | ECE | Params |
+| --- | --- | --- | --- | --- | --- | --- |
+| DeepFM, same A100 job | 0.7879 | 0.4507 | 0.8121 | 0.7880 | 0.0078 | 21.6M |
+| DLRM (TorchRec) | 0.7872 | 0.4517 | 0.8139 | 0.7872 | 0.0103 | 20.4M |
+
+DLRM ties DeepFM. `scripts/run_torchrec.py` then runs TorchRec's sharding planner and `DistributedModelParallel` on a one GPU topology. With one device the plan is trivial, every one of the 36 tables row wise on rank 0 with the fused fbgemm kernel, and that is stated rather than dressed up. What sharding does change is the kernel. The sharded model reproduces the unsharded scores exactly (largest difference 0.0 over 400,000 test rows) and scores a batch 1.15 to 1.23 times faster from batch 256 to 4,096, the batch sizes where the embedding lookups dominate. At 16,384 the MLPs dominate and the two are even. fp16 autocast only helps at the largest batch (1.31 times at 16,384), the same memory bound pattern as the TensorRT results below.
+
+| Batch | Unsharded fp32 p50 | Unsharded fp16 p50 | Sharded, fused fbgemm p50 | Sharded predictions/sec |
+| --- | --- | --- | --- | --- |
+| 256 | 1.92 ms | 2.14 ms | 1.63 ms | 157K |
+| 1,024 | 1.91 ms | 2.26 ms | 1.68 ms | 609K |
+| 4,096 | 2.17 ms | 2.12 ms | 1.77 ms | 2.32M |
+| 16,384 | 3.31 ms | 2.52 ms | 3.34 ms | 4.91M |
+
+A100 SXM4 80GB, RunPod Secure Cloud, torch 2.8, TorchRec 1.3.0, CUDA events, 100 timed batches after 20 warm up. Every row is in `results/gpu_a100_dlrm/torchrec.jsonl`, and the model table in `results/gpu_a100_dlrm/benchmark_report.md`. These are PyTorch path numbers and are not compared with the TensorRT engines below, which were built from DeepFM and DCN on a different pod.
+
 ## Inference Optimization
 
 A trained ranker is only useful if it can score live traffic inside a tight latency budget, so the model has to leave the training framework and run on an inference optimized runtime. This stage exports the trained model once to ONNX and then sweeps every serving backend the project supports across a grid of model, runtime, precision, and batch size, on the exact same held out test rows.
