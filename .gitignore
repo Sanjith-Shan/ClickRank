@@ -75,3 +75,4 @@ ClickRank_CLAUDE.md
 # Keep directory placeholders
 !data/download.sh
 !results/.gitkeep
+logs/
