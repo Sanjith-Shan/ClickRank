@@ -1,8 +1,30 @@
 # ClickRank
 
-ClickRank (formerly AdRankBench) is a click prediction and ranking system for ads: CTR models, calibration, inference optimisation and serving, measured on real data.
+ClickRank (formerly AdRankBench) is an ad retrieval and ranking system measured on real data. A two tower model and a FAISS index pick a few hundred candidates out of 846,811 real Taobao ads, CTR rankers (DeepFM, DCN, DIN) score them, and the whole path is served over HTTP. The CTR model comparison, calibration and the CPU and GPU inference work run on real Criteo click logs. What it does not claim. The models are the standard published designs, credited in `DESIGN.md`. Retrieval recall is measured against exact search on the same embeddings, not against a leaderboard. Retrieval numbers come from Taobao and CTR and inference numbers come from Criteo, and no figure blends the two. Every figure is in `NUMBERS.md` or the README tables with the results file it came from.
 
-### CTR Prediction Evaluation Framework for Ad Ranking Models
+## Retrieval, then ranking (Taobao)
+
+Criteo has no user or ad identifiers, so the retrieval stage runs on the Taobao display ads log (26.5M impressions over 8 days, 1.14M users, 846,811 ads). Days 1 to 7 train, day 8 is the test day, and every model choice was made on a day 7 validation split without looking at day 8.
+
+**Retrieval.** A two tower model (Covington et al. 2016) trained with in batch sampled softmax and the log q sampling bias correction of Yi et al. 2019. On the test day the clicked ad is in the user's top 500 of 846,811 ads for 19.6% of clicks, against 12.5% for a popularity list and 0.06% by chance. The sampling bias correction is the largest single effect in the design. Without it, validation hit rate falls from 10.8% to 4.3%.
+
+**Index.** An IVF index returns 97.2% of the exact top 100 at 1.5 ms per query on one thread, and IVF-PQ holds the whole corpus in 35 MB instead of 217 MB while returning 83% of the exact top 100. Both were timed while other jobs ran, so the clean per request timings are the ones below. The full sweep of flat, IVF, IVF-PQ and HNSW settings is in `NUMBERS.md`.
+
+**Why two stages.** Replaying 300 test day clicks, DeepFM scoring all 846,811 ads puts the clicked ad in its top 50 for 0.3% of requests (median rank 287,069). Retrieving 50 first and ranking only those puts it in the top 50 for 10.0%. A ranker trained on logged impressions has only seen ads some earlier system chose to show, so it cannot order the whole catalog, and retrieval is what fixes that. The impression level metrics, which fall when retrieval is added, and why, are in `DESIGN.md`.
+
+LATENCY_PARAGRAPH
+
+**Freshness.** The same DeepFM trained on one day of data loses test day AUC steadily with age, from 0.587 one day stale to 0.566 seven days stale (He et al. 2014, Section 5). See Model Freshness below.
+
+```bash
+python scripts/run_retrieval.py --source taobao --temperature 0.1 --epochs 2
+python scripts/run_index_sweep.py --source taobao
+python scripts/run_rankers.py --source taobao
+python scripts/run_two_stage.py --source taobao
+python scripts/make_numbers.py
+```
+
+## CTR models on Criteo
 
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
