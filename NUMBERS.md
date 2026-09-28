@@ -175,5 +175,167 @@ Update strategy. Base model on days 1 to 4, then days 5 to 7 arrive.
 | 0 | none | 0.5970 | 0.9970 | 0 | 0 |
 | 0 | warm | 0.5974 | 0.9903 | 4,500,000 | 138 |
 | 0 | full | 0.6141 | 0.9845 | 21,000,000 | 965 |
+| 1 | none | 0.6018 | 0.9914 | 0 | 0 |
+| 1 | warm | 0.6005 | 0.9908 | 4,500,000 | 77 |
+| 1 | full | 0.6138 | 0.9819 | 21,000,000 | 394 |
+
+Update strategy, summary row:
+
+```
+{
+ "dataset": "taobao",
+ "experiment": "update_summary",
+ "seeds": [
+  1
+ ],
+ "none": {
+  "ne": {
+   "mean": 0.9914296219470945,
+   "std": 0.0,
+   "n": 1
+  },
+  "auc": {
+   "mean": 0.6017877788496335,
+   "std": 0.0,
+   "n": 1
+  },
+  "gauc_by_user": {
+   "mean": 0.5477557291644682,
+   "std": 0.0,
+   "n": 1
+  },
+  "train_seconds": {
+   "mean": 0.0,
+   "std": 0.0,
+   "n": 1
+  },
+  "rows_processed": {
+   "mean": 0.0,
+   "std": 0.0,
+   "n": 1
+  }
+ },
+ "warm": {
+  "ne": {
+   "mean": 0.9908317311853554,
+   "std": 0.0,
+   "n": 1
+  },
+  "auc": {
+   "mean": 0.6004514237257588,
+   "std": 0.0,
+   "n": 1
+  },
+  "gauc_by_user": {
+   "mean": 0.5492844205018073,
+   "std": 0.0,
+   "n": 1
+  },
+  "train_seconds": {
+   "mean": 77.35942959785461,
+   "std": 0.0,
+   "n": 1
+  },
+  "rows_processed": {
+   "mean": 4500000.0,
+   "std": 0.0,
+   "n": 1
+  }
+ },
+ "full": {
+  "ne": {
+   "mean": 0.9818669798539056,
+   "std": 0.0,
+   "n": 1
+  },
+  "auc": {
+   "mean": 0.6137591501058767,
+   "std": 0.0,
+   "n": 1
+  },
+  "gauc_by_user": {
+   "mean": 0.5547817697118138,
+   "std": 0.0,
+   "n": 1
+  },
+  "train_seconds": {
+   "mean": 394.2597723007202,
+   "std": 0.0,
+   "n": 1
+  },
+  "rows_processed": {
+   "mean": 21000000.0,
+   "std": 0.0,
+   "n": 1
+  }
+ },
+ "warm_gap_recovered_ne": {
+  "mean": 0.06252359503917435,
+  "std": 0.0,
+  "n": 1
+ },
+ "warm_gap_recovered_auc": {
+  "mean": -0.11162924407492895,
+  "std": 0.0,
+  "n": 1
+ },
+ "compute_ratio_rows": {
+  "mean": 4.666666666666667,
+  "std": 0.0,
+  "n": 1
+ },
+ "compute_ratio_seconds": {
+  "mean": 5.096466899384352,
+  "std": 0.0,
+  "n": 1
+ },
+ "compute_ratio_rows_daily_schedule": {
+  "mean": 12.0,
+  "std": 0.0,
+  "n": 1
+ },
+ "freshness_gap_ne": {
+  "mean": 0.009562642093188911,
+  "std": 0.0,
+  "n": 1
+ },
+ "total_wall_seconds": 774.1661241054535,
+ "device": "mps",
+ "quick": false,
+ "model": "deepfm",
+ "features": [
+  "user_id",
+  "cms_segid",
+  "cms_group_id",
+  "final_gender_code",
+  "age_level",
+  "pvalue_level",
+  "shopping_level",
+  "occupation",
+  "new_user_class_level",
+  "ad_id",
+  "cate",
+  "campaign",
+  "customer",
+  "brand",
+  "price_bin",
+  "pid",
+  "hour"
+ ],
+ "test_features": "frozen at end of the last training day",
+ "config": {
+  "train_rows": 1500000,
+  "val_rows": 200000,
+  "epochs": 2,
+  "finetune_epochs": 1,
+  "finetune_lr": null,
+  "window_days": 1,
+  "base_days": 4,
+  "test_rows": null,
+  "stale_days": null,
+  "batch_size": 4096
+ }
+}
+```
 
 <!-- generated:end -->

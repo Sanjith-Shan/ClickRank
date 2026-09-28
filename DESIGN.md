@@ -186,3 +186,18 @@ spec, the shared trainer, `normalized_entropy` and `fast_group_auc` unchanged.
 - Fine tuning uses one learning rate and one pass. Another learning rate, replayed older
   rows or online learning at finer grain than a day could all change the answer and were not
   tried.
+
+### What it measured
+
+Staleness, seed 0, one day of training data per model with equal rows. Test day AUC rises
+steadily with recency, from 0.566 for the model trained on day 1 (seven days stale) to 0.587
+for the model trained on day 7 (one day stale). That is the direction He et al. report.
+
+Update strategy, base model on days 1 to 4, then days 5 to 7 arrive, two seeds. A full retrain
+on all seven days beats no update on both seeds, by 0.017 and 0.012 AUC and by 0.013 and 0.010
+NE. A one pass daily warm start processed 4.7 times fewer rows than the full retrain, and
+recovered 54% of the NE gap on seed 0 but only 6% on seed 1, with no AUC gain on either. So
+the finding is that freshness matters here and that this cheap warm start does not reliably
+capture it. A higher learning rate, more than one pass, or replaying some older days alongside
+the new one are the obvious next variants, and none of them has been run. Every row is in
+`results/retrieval/freshness.jsonl`.

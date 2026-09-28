@@ -14,7 +14,7 @@ Criteo has no user or ad identifiers, so the retrieval stage runs on the Taobao 
 
 **Latency.** Per request on the M3 Pro CPU with one torch thread and one FAISS thread, the two stage path (user tower, HNSW search, candidate features, DeepFM on the candidates) takes 1.28 ms at the median with K = 50 and 2.12 ms with K = 500. Scoring all 846,811 ads with the same DeepFM takes 2,477 ms on one thread and 1,246 ms on all twelve cores, its best case. With exact search instead of HNSW the two stage path is 6.7 to 9.1 ms, almost all of it the brute force search. These ran at a load average near 11 while the machine was otherwise shared, and every row in `results/retrieval/stage_latency.jsonl` records that load.
 
-**Freshness.** The same DeepFM trained on one day of data loses test day AUC steadily with age, from 0.587 one day stale to 0.566 seven days stale (He et al. 2014, Section 5). See Model Freshness below.
+**Freshness.** The same DeepFM trained on one day of data loses test day AUC steadily with age, from 0.587 one day stale to 0.566 seven days stale (He et al. 2014, Section 5). A full retrain on new days gains about 0.013 to 0.017 AUC over not updating, on two seeds, while a cheap one pass warm start did not reliably recover that gap. See Model Freshness below and `DESIGN.md`.
 
 ```bash
 python scripts/run_retrieval.py --source taobao --temperature 0.1 --epochs 2
