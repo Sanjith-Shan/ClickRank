@@ -153,7 +153,7 @@ class PowerSampler:
         if not self._open():
             return self
         self._thread = threading.Thread(
-            target=self._loop, name="adrankbench-power-sampler", daemon=True
+            target=self._loop, name="clickrank-power-sampler", daemon=True
         )
         self._thread.start()
         return self

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Start the AdRankBench ranking service.
+"""Start the ClickRank ranking service.
 
 This is the online lane. It loads one serving bundle, selects the fastest
 backend the machine can actually construct, warms it, and serves /score,
@@ -60,7 +60,7 @@ _APP_FACTORY = "src.serving.entrypoint:app"
 def parse_args() -> argparse.Namespace:
     """Parse the command line flags for the service."""
     parser = argparse.ArgumentParser(
-        description="Serve the AdRankBench ranker over http."
+        description="Serve the ClickRank ranker over http."
     )
     parser.add_argument("--host", default="127.0.0.1", help="Bind address.")
     parser.add_argument("--port", type=int, default=8000, help="Bind port.")

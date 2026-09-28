@@ -1,7 +1,7 @@
 # Dependencies for the distributed data lane only.
 #
 # These are kept out of requirements.txt on purpose. PySpark pulls in a JVM
-# dependency that nothing else in AdRankBench needs, and the benchmark, the
+# dependency that nothing else in ClickRank needs, and the benchmark, the
 # inference lane, and the DuckDB analytics all have to stay installable and
 # runnable on a machine with no Java at all. Install this file only when you
 # want to run the Spark pipeline.

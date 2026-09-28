@@ -1,4 +1,4 @@
-# Serving only extras for the AdRankBench ranking service.
+# Serving only extras for the ClickRank ranking service.
 #
 # These are additions on top of requirements.txt, not a replacement for it. The
 # service loads the same checkpoint, the same exported graph, and the same

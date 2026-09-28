@@ -1,4 +1,4 @@
-"""The serving layer for the AdRankBench rankers.
+"""The serving layer for the ClickRank rankers.
 
 The inference package answers how fast a trained ranker can run. This package
 answers whether it can be served, which is a different question with a different

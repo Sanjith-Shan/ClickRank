@@ -1,4 +1,4 @@
-# AdRankBench developer targets.
+# ClickRank developer targets.
 #
 # These are shorthands for commands that already work. Nothing here is required
 # and every target prints or is a single readable command, so anything can be
@@ -14,7 +14,7 @@ COMPOSE ?= docker compose -f docker/docker-compose.yml
         docker-build docker-check docker-bench docker-engines docker-shell clean
 
 help:
-	@echo "AdRankBench targets"
+	@echo "ClickRank targets"
 	@echo ""
 	@echo "  install          Install the CPU dependencies"
 	@echo "  install-gpu      Install the GPU extras on top, in the right order"

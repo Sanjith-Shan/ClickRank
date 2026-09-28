@@ -340,7 +340,7 @@ def run_scale(args: argparse.Namespace, spark: Any) -> List[Dict[str, Any]]:
     it today, which is fit on train and transform all three splits.
     """
     rows: List[Dict[str, Any]] = []
-    scratch = tempfile.mkdtemp(prefix="adrankbench_scale_")
+    scratch = tempfile.mkdtemp(prefix="clickrank_scale_")
     try:
         for n_rows in sorted(args.scale_points):
             scoped = argparse.Namespace(**vars(args))
@@ -578,7 +578,7 @@ def main() -> int:
 
     startup_start = time.perf_counter()
     spark = build_session(
-        app_name="AdRankBenchFeaturePipeline",
+        app_name="ClickRankFeaturePipeline",
         master=args.master,
         shuffle_partitions=args.shuffle_partitions,
         driver_memory=args.driver_memory,

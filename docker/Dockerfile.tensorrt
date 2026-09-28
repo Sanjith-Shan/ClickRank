@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-# AdRankBench GPU inference image.
+# ClickRank GPU inference image.
 #
 # The base tag is pinned exactly rather than floated, because a TensorRT engine
 # is a build artifact tied to the TensorRT version, the CUDA version, and the GPU
@@ -38,9 +38,9 @@ FROM ${TRT_IMAGE}
 ARG TORCH_VERSION=2.7.1
 ARG TORCH_INDEX=https://download.pytorch.org/whl/cu128
 
-LABEL org.opencontainers.image.title="AdRankBench GPU inference"
-LABEL org.opencontainers.image.description="TensorRT, ONNX Runtime, and PyTorch inference benchmark for the AdRankBench DeepFM ranker"
-LABEL org.opencontainers.image.source="https://github.com/Sanjith-Shan/AdRankBench"
+LABEL org.opencontainers.image.title="ClickRank GPU inference"
+LABEL org.opencontainers.image.description="TensorRT, ONNX Runtime, and PyTorch inference benchmark for the ClickRank DeepFM ranker"
+LABEL org.opencontainers.image.source="https://github.com/Sanjith-Shan/ClickRank"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Fail the build on the first bad command in a pipeline rather than on the last.
@@ -51,9 +51,9 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     MPLBACKEND=Agg \
-    PYTHONPATH=/workspace/adrankbench
+    PYTHONPATH=/workspace/clickrank
 
-WORKDIR /workspace/adrankbench
+WORKDIR /workspace/clickrank
 
 # One apt layer. libgomp is what the OpenVINO and ONNX Runtime CPU kernels link
 # against, git is here so the container can report the commit it is benchmarking.
@@ -106,7 +106,7 @@ COPY . .
 # data and results are the two mount points. They are created here so a run with
 # no bind mount still writes somewhere sensible instead of failing, and a run
 # with a bind mount just covers them.
-RUN mkdir -p /workspace/adrankbench/data /workspace/adrankbench/results
+RUN mkdir -p /workspace/clickrank/data /workspace/clickrank/results
 
 # A build time smoke check of the import surface the benchmark depends on. This
 # catches a broken install now rather than forty minutes into a GPU rental.

@@ -1,4 +1,4 @@
-"""Data loading and synthetic data generation for AdRankBench.
+"""Data loading and synthetic data generation for ClickRank.
 
 This module reads the Criteo style display advertising data and also provides a
 synthetic generator. The synthetic generator is the workhorse for offline runs.

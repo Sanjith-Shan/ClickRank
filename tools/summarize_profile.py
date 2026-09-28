@@ -566,7 +566,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         prog="summarize_profile.py",
         description=(
             "Turn the CSV from nsys stats into a markdown report in the same "
-            "style the rest of AdRankBench reports in."
+            "style the rest of ClickRank reports in."
         ),
     )
     parser.add_argument(

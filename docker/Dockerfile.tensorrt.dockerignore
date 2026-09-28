@@ -27,4 +27,4 @@ results/*
 !results/.gitkeep
 
 # Local only build notes.
-AdRankBench_CLAUDE.md
+ClickRank_CLAUDE.md

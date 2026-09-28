@@ -113,7 +113,7 @@ DEFAULT_CANDIDATES: Tuple[int, ...] = (1, 16, 64)
 def parse_args() -> argparse.Namespace:
     """Parse the command line flags for the load test."""
     parser = argparse.ArgumentParser(
-        description="Load test the AdRankBench ranking service."
+        description="Load test the ClickRank ranking service."
     )
     parser.add_argument(
         "--url",
@@ -744,7 +744,7 @@ def write_markdown(results: Dict[str, Any], path: str) -> str:
     lines.append("# Serving Load Test")
     lines.append("")
     lines.append(
-        "Closed loop load test of the AdRankBench ranking service. Every number "
+        "Closed loop load test of the ClickRank ranking service. Every number "
         "on this page was measured on the machine named below and applies to "
         "that machine, that backend, and that configuration only."
     )

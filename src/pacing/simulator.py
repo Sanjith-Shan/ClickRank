@@ -2,7 +2,7 @@
 
 This module synthesizes a realistic daily traffic curve and then replays a
 budget pacing controller against it. It supports the pacing cluster of
-AdRankBench which maps to the ads pacing and traffic control area.
+ClickRank which maps to the ads pacing and traffic control area.
 
 The traffic curve follows a diurnal pattern. Demand is low overnight, rises
 through the morning, peaks in the early evening, and falls again at night. The

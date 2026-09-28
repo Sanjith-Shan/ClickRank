@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Profile the AdRankBench inference benchmark under NVIDIA Nsight.
+# Profile the ClickRank inference benchmark under NVIDIA Nsight.
 #
 # The benchmark answers how long a batch takes. A profiler answers why it takes
 # that long, and those are different questions with different tools. This script

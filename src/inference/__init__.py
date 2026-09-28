@@ -1,4 +1,4 @@
-"""Inference serving stack for the AdRankBench rankers.
+"""Inference serving stack for the ClickRank rankers.
 
 A trained ranker only earns its keep if it can score live traffic inside a
 latency budget, and the way it gets there is by leaving the training framework

@@ -96,7 +96,7 @@ def _legacy_calibrator_api() -> bool:
 def parse_args() -> argparse.Namespace:
     """Parse the command line flags for the engine builder."""
     parser = argparse.ArgumentParser(
-        description="Build TensorRT engines for the AdRankBench rankers."
+        description="Build TensorRT engines for the ClickRank rankers."
     )
     parser.add_argument(
         "--models",

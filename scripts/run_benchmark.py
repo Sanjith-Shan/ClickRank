@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Main entry point for the AdRankBench click through rate benchmark.
+"""Main entry point for the ClickRank click through rate benchmark.
 
 This script runs the full pipeline end to end. It loads or synthesizes data,
 splits it temporally, builds the featurized datasets, trains every selected
@@ -73,7 +73,7 @@ _TORCH_MODELS = {"fm", "deepfm", "dcn", "dnn"}
 def parse_args() -> argparse.Namespace:
     """Parse the command line flags for the benchmark run."""
     parser = argparse.ArgumentParser(
-        description="Run the AdRankBench click through rate benchmark."
+        description="Run the ClickRank click through rate benchmark."
     )
     parser.add_argument(
         "--data-path",

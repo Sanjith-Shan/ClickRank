@@ -623,5 +623,5 @@ def test_the_report_renders_for_every_outcome():
         payload([measurement("openvino-cpu-fp32", p50=4.0, spread=0.2)]),
     ):
         text = gate.render_report(check(base, now))
-        assert "AdRankBench inference regression gate" in text
+        assert "ClickRank inference regression gate" in text
         assert "exit code" in text

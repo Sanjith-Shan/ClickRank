@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Inference optimization benchmark for the AdRankBench rankers.
+"""Inference optimization benchmark for the ClickRank rankers.
 
 A trained ranking model is only useful in production if it can score traffic
 within a tight latency budget, so the model has to leave the training framework

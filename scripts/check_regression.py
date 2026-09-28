@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Performance regression gate for the AdRankBench inference benchmark.
+"""Performance regression gate for the ClickRank inference benchmark.
 
 A benchmark that nobody watches rots. The numbers in `results/` were true on the
 day they were produced and nothing checks that they are still true after the
@@ -887,7 +887,7 @@ def render_report(report: Report) -> str:
     """
     lines: List[str] = []
     lines.append(_rule("="))
-    lines.append("AdRankBench inference regression gate")
+    lines.append("ClickRank inference regression gate")
     lines.append(_rule("="))
     lines.append(f"results  {report.results_path}")
     lines.append(f"baseline {report.baseline_path}")

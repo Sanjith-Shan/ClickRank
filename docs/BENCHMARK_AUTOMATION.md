@@ -1,6 +1,6 @@
 # Benchmark Automation and Profiling
 
-`docs/METHODOLOGY.md` explains the training half of AdRankBench and
+`docs/METHODOLOGY.md` explains the training half of ClickRank and
 `docs/INFERENCE.md` explains the inference half. This document explains the
 layer that sits around both of them, which is the automation that runs the
 benchmark and the tooling that gates and profiles the result.

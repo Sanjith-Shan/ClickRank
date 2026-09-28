@@ -1,4 +1,4 @@
-"""Benchmark automation and profiling helpers for AdRankBench.
+"""Benchmark automation and profiling helpers for ClickRank.
 
 This package holds the pieces of the automation layer that are worth importing
 rather than shelling out to. Nothing in `src/` depends on it and nothing here is

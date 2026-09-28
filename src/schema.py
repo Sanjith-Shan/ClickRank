@@ -1,4 +1,4 @@
-"""Shared data contracts for the AdRankBench pipeline.
+"""Shared data contracts for the ClickRank pipeline.
 
 This module is intentionally dependency light. It defines the column schema of
 the Criteo dataset and the two dataclasses that every downstream module agrees

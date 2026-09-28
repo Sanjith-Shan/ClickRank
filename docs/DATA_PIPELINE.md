@@ -1,6 +1,6 @@
 # Distributed Data Pipeline
 
-This document covers the distributed lane of AdRankBench. There are two halves. The first is a PySpark reimplementation of the feature pipeline that produces numerically identical output to the pandas reference, which lives in `src/spark/` and runs through `scripts/run_spark_pipeline.py`. The second is a SQL analytics layer on DuckDB that measures the data behind each feature engineering decision the project already makes, which lives in `src/sql/` and runs through `scripts/run_data_insights.py`.
+This document covers the distributed lane of ClickRank. There are two halves. The first is a PySpark reimplementation of the feature pipeline that produces numerically identical output to the pandas reference, which lives in `src/spark/` and runs through `scripts/run_spark_pipeline.py`. The second is a SQL analytics layer on DuckDB that measures the data behind each feature engineering decision the project already makes, which lives in `src/sql/` and runs through `scripts/run_data_insights.py`.
 
 The two lanes have very different dependency footprints and that is deliberate. Spark needs a JVM. DuckDB needs nothing. Every Spark entry point probes for a Java runtime and exits cleanly with a message when it cannot find one, and the Spark tests skip rather than fail, so a machine with no JDK still runs `pytest -q` green and still gets the full analytics report.
 

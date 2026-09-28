@@ -1,4 +1,4 @@
-"""Markdown report generation for the AdRankBench benchmark.
+"""Markdown report generation for the ClickRank benchmark.
 
 This module turns a list of per model result dicts into a single readable
 markdown report. The report ranks models by AUC, links the calibration figure,
@@ -153,7 +153,7 @@ def generate_report(
     report_path = os.path.join(out_dir, "benchmark_report.md")
 
     sections: List[str] = []
-    sections.append("# AdRankBench Benchmark Report")
+    sections.append("# ClickRank Benchmark Report")
     sections.append(
         "This report compares click through rate models on a shared featurized "
         "dataset. Models are ranked by test AUC. All numbers come from the held "

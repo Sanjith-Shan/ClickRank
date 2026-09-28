@@ -1,4 +1,4 @@
-# One line run wiring for the AdRankBench CPU serving image.
+# One line run wiring for the ClickRank CPU serving image.
 #
 # Paths here are relative to this file, which lives in docker/, so the build
 # context is the repository root one level up and the two bind mounts point at
@@ -31,22 +31,22 @@ x-serving: &serving
       BASE_IMAGE: python:3.11-slim-bookworm
       TORCH_VERSION: 2.7.1
       TORCH_INDEX: https://download.pytorch.org/whl/cpu
-  image: adrankbench-serving:cpu
+  image: clickrank-serving:cpu
 
   # Bind mounts rather than named volumes, so the serving bundle, the scored
   # output, and the load test report are ordinary files on the host that can be
   # read, committed, or copied off the box.
   volumes:
-    - ../data:/workspace/adrankbench/data
-    - ../results:/workspace/adrankbench/results
+    - ../data:/workspace/clickrank/data
+    - ../results:/workspace/clickrank/results
 
-  working_dir: /workspace/adrankbench
+  working_dir: /workspace/clickrank
 
   environment:
     PYTHONUNBUFFERED: "1"
     MPLBACKEND: "Agg"
-    ADRANK_BUNDLE_DIR: /workspace/adrankbench/results/serving/bundle
-    ADRANK_ARTIFACT_DIR: /workspace/adrankbench/results
+    ADRANK_BUNDLE_DIR: /workspace/clickrank/results/serving/bundle
+    ADRANK_ARTIFACT_DIR: /workspace/clickrank/results
     ADRANK_MODEL: "${ADRANK_MODEL:-deepfm}"
     ADRANK_PORT: "8000"
     # The queueing parameter of the service. Raising it does not raise

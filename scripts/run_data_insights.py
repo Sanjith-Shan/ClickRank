@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """SQL analytics over the impression data, run on DuckDB.
 
-The rest of AdRankBench makes feature engineering decisions and explains them in
+The rest of ClickRank makes feature engineering decisions and explains them in
 prose. Hash encoding because the fields are high cardinality. Missing indicators
 because missingness is signal. Crosses because interactions matter. A temporal
 split because the data drifts. Those are all defensible, and until now none of
@@ -685,7 +685,7 @@ def write_report(
     lines.append(f"- Total query wall time. {elapsed:.2f} s.")
     lines.append("")
     lines.append(
-        "The through line is that each feature engineering choice AdRankBench "
+        "The through line is that each feature engineering choice ClickRank "
         "already makes is stated here as a measurement rather than a convention. "
         "Where a measurement fails to support the choice, that is said plainly."
     )
@@ -1132,7 +1132,7 @@ def main() -> int:
     if args.threads > 0:
         connection.execute(f"PRAGMA threads={int(args.threads)}")
 
-    scratch_dir = tempfile.mkdtemp(prefix="adrankbench_insights_")
+    scratch_dir = tempfile.mkdtemp(prefix="clickrank_insights_")
     try:
         source, n_rows = build_source(connection, args, scratch_dir)
         print(f"analysing {n_rows:,} rows from the {source}.")

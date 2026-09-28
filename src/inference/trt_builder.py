@@ -52,7 +52,7 @@ DOCKER_HINT = (
     "tensorrt python package. None of those exist on Apple Silicon or on any "
     "cpu only host. Run this on a cuda machine through the gpu image this "
     "repository ships, with docker build -f docker/Dockerfile.tensorrt -t "
-    "adrankbench-trt . and then docker run --gpus all adrankbench-trt. That "
+    "clickrank-trt . and then docker run --gpus all clickrank-trt. That "
     "image is built on nvcr.io/nvidia/tensorrt:25.01-py3, which carries "
     "TensorRT 10 and the cuda runtime already installed."
 )

@@ -58,7 +58,7 @@ results/sweeps/
 .DS_Store
 
 # Internal build specification (kept local, not part of the public portfolio)
-AdRankBench_CLAUDE.md
+ClickRank_CLAUDE.md
 
 # Keep directory placeholders
 !data/download.sh

@@ -45,7 +45,7 @@ from src.serving.schemas import (
     ScoreTimings,
 )
 
-API_TITLE: str = "AdRankBench ranking service"
+API_TITLE: str = "ClickRank ranking service"
 API_VERSION: str = "1.0.0"
 
 API_DESCRIPTION: str = (

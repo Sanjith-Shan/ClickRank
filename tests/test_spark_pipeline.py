@@ -63,7 +63,7 @@ def spark():
     from src.spark.session import build_session
 
     session = build_session(
-        app_name="AdRankBenchParityTest",
+        app_name="ClickRankParityTest",
         master="local[2]",
         shuffle_partitions=4,
         driver_memory="2g",
@@ -304,7 +304,7 @@ def test_parquet_output_is_partitioned_by_split(spark, distributed):
     from src.spark.io import write_features
 
     spark_pipeline, featurized = distributed
-    output_dir = tempfile.mkdtemp(prefix="adrankbench_parity_")
+    output_dir = tempfile.mkdtemp(prefix="clickrank_parity_")
     output_path = os.path.join(output_dir, "features.parquet")
     try:
         write_features(featurized, output_path)

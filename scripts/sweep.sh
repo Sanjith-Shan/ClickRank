@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the whole AdRankBench inference benchmark procedure end to end.
+# Run the whole ClickRank inference benchmark procedure end to end.
 #
 # The procedure is four steps that have to happen in this order and that are
 # easy to get wrong by hand. Pick the config that matches the machine. Build the
@@ -66,7 +66,7 @@ die() {
 
 usage() {
   cat <<'USAGE'
-sweep.sh. Run the AdRankBench inference benchmark procedure end to end.
+sweep.sh. Run the ClickRank inference benchmark procedure end to end.
 
   usage
     bash scripts/sweep.sh [options]
@@ -441,7 +441,7 @@ cp "${CONFIG_FILE}" "${RUN_DIR}/config.yaml"
 # what was run, on what, from which commit, and what the gate said, so nobody
 # has to reconstruct any of that from a directory name.
 {
-  printf 'AdRankBench sweep run\n'
+  printf 'ClickRank sweep run\n'
   printf '\n'
   printf 'started utc        %s\n' "${STAMP}"
   printf 'config             %s\n' "${CONFIG_NAME}"

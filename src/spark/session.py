@@ -1,7 +1,7 @@
 """SparkSession construction and environment probing.
 
 Spark needs a JVM. That is the one hard dependency this lane carries that the
-rest of AdRankBench does not, so every entry point probes for it first and
+rest of ClickRank does not, so every entry point probes for it first and
 degrades with a clear message rather than throwing a stack trace. The helpers
 here are the single place that knows how to answer whether Spark can run.
 
@@ -95,7 +95,7 @@ def unavailable_reason() -> Optional[str]:
 
 
 def build_session(
-    app_name: str = "AdRankBench",
+    app_name: str = "ClickRank",
     master: str = "local[*]",
     shuffle_partitions: int = DEFAULT_SHUFFLE_PARTITIONS,
     driver_memory: str = "4g",

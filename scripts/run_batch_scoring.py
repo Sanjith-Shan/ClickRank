@@ -63,7 +63,7 @@ DEFAULT_OUTPUT_DIR: str = os.path.join("results", "serving")
 def parse_args() -> argparse.Namespace:
     """Parse the command line flags for the batch scoring job."""
     parser = argparse.ArgumentParser(
-        description="Batch score a shard through the AdRankBench serving bundle."
+        description="Batch score a shard through the ClickRank serving bundle."
     )
     parser.add_argument(
         "--input",

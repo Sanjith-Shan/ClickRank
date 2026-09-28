@@ -1,4 +1,6 @@
-# AdRankBench
+# ClickRank
+
+ClickRank (formerly AdRankBench) is a click prediction and ranking system for ads: CTR models, calibration, inference optimisation and serving, measured on real data.
 
 ### CTR Prediction Evaluation Framework for Ad Ranking Models
 
@@ -6,7 +8,7 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)
 
-AdRankBench trains and evaluates five click through rate prediction architectures (Logistic Regression, FM, DeepFM, DCN, DNN) on the Criteo Display Advertising Challenge dataset. The framework implements production grade feature engineering with log transforms, hash encoding, frequency encoding, and explicit feature crosses. All models are evaluated with AUC, logloss, normalized entropy, group AUC, and calibration analysis using temporal train and test splits to prevent data leakage.
+ClickRank trains and evaluates five click through rate prediction architectures (Logistic Regression, FM, DeepFM, DCN, DNN) on the Criteo Display Advertising Challenge dataset. The framework implements production grade feature engineering with log transforms, hash encoding, frequency encoding, and explicit feature crosses. All models are evaluated with AUC, logloss, normalized entropy, group AUC, and calibration analysis using temporal train and test splits to prevent data leakage.
 
 The project is built around the core problems of ad ranking systems. It covers ranking and retrieval, query understanding and relevance through a two tower DSSM model, probability calibration for ad pricing, and budget pacing through a feedback controller simulator. Each piece maps to a concrete skill that ad ranking and search ads teams care about.
 
@@ -163,9 +165,9 @@ This is not theoretical. The gate fired on a run where nothing in the code had c
 
 ## Architecture
 
-AdRankBench is a two stage pipeline. The first stage is feature engineering. Raw rows flow through a temporal split and then through a fit and transform feature pipeline that produces standardized numerical features, hash encoded categorical features, frequency encodings, and second order feature crosses. The second stage is model training and evaluation. The featurized splits are handed to each model, the trainer runs an early stopping loop, and the evaluation harness computes ranking and calibration metrics on the held out test split.
+ClickRank is a two stage pipeline. The first stage is feature engineering. Raw rows flow through a temporal split and then through a fit and transform feature pipeline that produces standardized numerical features, hash encoded categorical features, frequency encodings, and second order feature crosses. The second stage is model training and evaluation. The featurized splits are handed to each model, the trainer runs an early stopping loop, and the evaluation harness computes ranking and calibration metrics on the held out test split.
 
-This mirrors how production ad ranking works. A retrieval stage built on something like BM25 or approximate nearest neighbor search narrows millions of candidates down to a shortlist. A ranking model in the FM or DeepFM or DCN family then scores that shortlist with rich feature interactions. AdRankBench focuses on the ranking stage and adds a separate two tower module that demonstrates the retrieval and relevance side.
+This mirrors how production ad ranking works. A retrieval stage built on something like BM25 or approximate nearest neighbor search narrows millions of candidates down to a shortlist. A ranking model in the FM or DeepFM or DCN family then scores that shortlist with rich feature interactions. ClickRank focuses on the ranking stage and adds a separate two tower module that demonstrates the retrieval and relevance side.
 
 ## Models
 
@@ -191,7 +193,7 @@ Every model is scored on the held out test split with several metrics, because n
 - Logloss. Binary cross entropy. It is calibration aware and punishes confident wrong probabilities.
 - Normalized Entropy (NE). Logloss divided by the entropy of the base click rate. A value below 1 means the model beats the constant base rate predictor. NE is robust to the overall click rate of the traffic, which is why it is the standard metric in the ad CTR literature.
 - Relative Improvement (RelaImpr). The fractional reduction in cross entropy against a constant base rate predictor.
-- GAUC (Group AUC). AUC computed within each impression group and averaged with impression weights. This is the production relevant view because a real auction ranks ads inside one user request or one query, not across the whole dataset. In real systems the group key is a user id or a query id. AdRankBench synthesizes impression groups for the test set so GAUC is computable offline.
+- GAUC (Group AUC). AUC computed within each impression group and averaged with impression weights. This is the production relevant view because a real auction ranks ads inside one user request or one query, not across the whole dataset. In real systems the group key is a user id or a query id. ClickRank synthesizes impression groups for the test set so GAUC is computable offline.
 
 Calibration is treated as a first class concern. The harness builds reliability curves by binning predictions into equal width buckets and comparing mean predicted probability against the observed click fraction. It also reports the Expected Calibration Error and overlays every model against the perfect calibration diagonal in a saved PNG. Calibration matters for ad pricing because bids and pacing decisions multiply the predicted click probability by a value, so a systematic bias in the probability turns directly into mispriced auctions. A model can rank well and still be miscalibrated, which is why calibration is reported alongside AUC.
 
@@ -255,6 +257,6 @@ Every entry point seeds everything with seed 42 for reproducibility.
 
 ## Methodology Notes
 
-AdRankBench uses a temporal positional split, not a random split. The data is time ordered, so train is the first 80 percent of rows, validation is the next 10 percent, and test is the last 10 percent. A random split would leak future impressions into training and inflate metrics in a way that never holds in production. Splitting by time matches how the model would actually be deployed, where it always predicts forward.
+ClickRank uses a temporal positional split, not a random split. The data is time ordered, so train is the first 80 percent of rows, validation is the next 10 percent, and test is the last 10 percent. A random split would leak future impressions into training and inflate metrics in a way that never holds in production. Splitting by time matches how the model would actually be deployed, where it always predicts forward.
 
 Normalized entropy and GAUC matter more than raw AUC for ad systems. Raw AUC measures population level ranking and is insensitive to the absolute click probability and to within request ordering. Ad pricing needs calibrated probabilities, which is what NE and logloss track, and ad auctions rank ads inside a single user request, which is what GAUC tracks. A model can win on raw AUC and still be the wrong choice for an auction. For the full reasoning on the split, on why NE and GAUC are the right headline metrics, and on the synthetic data design, see `docs/METHODOLOGY.md`.

@@ -1,4 +1,4 @@
-# GPU only extras for AdRankBench inference benchmarking.
+# GPU only extras for ClickRank inference benchmarking.
 #
 # These are additions on top of requirements.txt, not a replacement for it.
 # Install the base file first and then this one.

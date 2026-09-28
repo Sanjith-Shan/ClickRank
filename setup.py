@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="adrankbench",
+    name="clickrank",
     version="0.1.0",
     description="CTR prediction benchmark for ad ranking models",
     author="Sanjith Shanmugavel",

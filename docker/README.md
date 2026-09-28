@@ -1,6 +1,6 @@
 # Running the GPU Inference Benchmark
 
-Everything needed to reproduce the AdRankBench GPU inference numbers on a CUDA machine, starting from a box you have just rented and ending with the results back on your laptop. Commands are meant to be copied as written.
+Everything needed to reproduce the ClickRank GPU inference numbers on a CUDA machine, starting from a box you have just rented and ending with the results back on your laptop. Commands are meant to be copied as written.
 
 The image pins `nvcr.io/nvidia/tensorrt:25.01-py3`, which ships TensorRT 10.8.0.43 on CUDA 12.8.0.038 and expects driver 570.86.10 or newer. The pin is exact on purpose. A TensorRT engine is tied to the TensorRT version, the CUDA version, and the GPU architecture that built it, so floating the tag would change the builder under the benchmark and make two runs of the same command produce numbers that cannot be compared. If your host driver is older than 570, read the driver section near the bottom before building anything.
 
@@ -34,8 +34,8 @@ sudo systemctl restart docker
 ## Clone and Build
 
 ```bash
-git clone https://github.com/Sanjith-Shan/AdRankBench.git
-cd AdRankBench
+git clone https://github.com/Sanjith-Shan/ClickRank.git
+cd ClickRank
 
 docker compose -f docker/docker-compose.yml build
 ```
@@ -45,7 +45,7 @@ The build takes roughly fifteen to thirty minutes on a first run, most of which 
 To build without compose, which is the same thing with the arguments spelled out.
 
 ```bash
-docker build -f docker/Dockerfile.tensorrt -t adrankbench-trt:25.01 .
+docker build -f docker/Dockerfile.tensorrt -t clickrank-trt:25.01 .
 ```
 
 ## Verify the GPU Is Visible Inside the Image
@@ -117,10 +117,10 @@ Everything worth keeping is already on the host filesystem because of the bind m
 # Results only, without the multi hundred megabyte engines and checkpoints.
 rsync -avz --progress -e "ssh -p <PORT>" \
   --include='*/' --include='*.md' --include='*.png' --include='*.json' --exclude='*' \
-  root@<HOST>:/workspace/AdRankBench/results/ ./results/
+  root@<HOST>:/workspace/ClickRank/results/ ./results/
 
 # Or everything, engines included.
-rsync -avz --progress -e "ssh -p <PORT>" root@<HOST>:/workspace/AdRankBench/results/ ./results/
+rsync -avz --progress -e "ssh -p <PORT>" root@<HOST>:/workspace/ClickRank/results/ ./results/
 ```
 
 The engines are worth leaving behind. They are large, they are specific to the GPU that built them, and they will not load on a different architecture.
@@ -165,7 +165,7 @@ Note that this path installs `tensorrt` from PyPI rather than inheriting it from
 
 ```bash
 # From your laptop. The port and host come from the pod's SSH panel.
-rsync -avz -e "ssh -p <PORT>" root@<HOST>:/workspace/AdRankBench/results/ ./results/
+rsync -avz -e "ssh -p <PORT>" root@<HOST>:/workspace/ClickRank/results/ ./results/
 ```
 
 ## When the Driver Is Too Old for the Pinned Image
@@ -177,7 +177,7 @@ The base image expects driver 570.86.10 or newer. An older driver produces a sta
 **Use CUDA forward compatibility.** The image already carries the forward compatibility libraries at `/usr/local/cuda/compat` and they are already first on `LD_LIBRARY_PATH`, so on a supported configuration this works with no changes. The catch is that forward compatibility only works on data center GPUs such as the A100, H100, L40S, and the Tesla line, and it does not work on GeForce or workstation cards. Confirm it took effect from inside the container.
 
 ```bash
-docker run --rm --gpus all adrankbench-trt:25.01 \
+docker run --rm --gpus all clickrank-trt:25.01 \
   python3 -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 ```
 

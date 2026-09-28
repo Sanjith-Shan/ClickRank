@@ -1,4 +1,4 @@
-"""Ranking and calibration metrics for the AdRankBench benchmark.
+"""Ranking and calibration metrics for the ClickRank benchmark.
 
 This module collects the metrics that matter for click through rate models in
 real ad systems. AUC measures ranking quality. Logloss and normalized entropy

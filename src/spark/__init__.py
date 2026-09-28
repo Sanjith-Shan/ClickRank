@@ -1,4 +1,4 @@
-"""Distributed feature engineering for AdRankBench on PySpark.
+"""Distributed feature engineering for ClickRank on PySpark.
 
 The pandas feature pipeline in `src.data.preprocess` is the reference
 implementation. It is correct, readable, and bounded by the memory of a single

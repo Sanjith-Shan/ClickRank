@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-# AdRankBench CPU serving image.
+# ClickRank CPU serving image.
 #
 # This is the online lane. It builds an image that loads one serving bundle and
 # answers /score, /health, and /metrics. It is the counterpart to
@@ -47,9 +47,9 @@
 ARG BASE_IMAGE=python:3.11-slim-bookworm
 FROM ${BASE_IMAGE}
 
-LABEL org.opencontainers.image.title="AdRankBench CPU serving"
-LABEL org.opencontainers.image.description="FastAPI ranking service for the AdRankBench DeepFM ranker, CPU lane"
-LABEL org.opencontainers.image.source="https://github.com/Sanjith-Shan/AdRankBench"
+LABEL org.opencontainers.image.title="ClickRank CPU serving"
+LABEL org.opencontainers.image.description="FastAPI ranking service for the ClickRank DeepFM ranker, CPU lane"
+LABEL org.opencontainers.image.source="https://github.com/Sanjith-Shan/ClickRank"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Fail the build on the first bad command in a pipeline rather than on the last.
@@ -60,20 +60,20 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     MPLBACKEND=Agg \
-    PYTHONPATH=/workspace/adrankbench
+    PYTHONPATH=/workspace/clickrank
 
 # Serving defaults. Every one of these is read by src/serving/entrypoint.py and
 # every one is overridable at run time, so a deployment is a set of environment
 # variables rather than an edited image.
-ENV ADRANK_BUNDLE_DIR=/workspace/adrankbench/results/serving/bundle \
-    ADRANK_ARTIFACT_DIR=/workspace/adrankbench/results \
+ENV ADRANK_BUNDLE_DIR=/workspace/clickrank/results/serving/bundle \
+    ADRANK_ARTIFACT_DIR=/workspace/clickrank/results \
     ADRANK_MODEL=deepfm \
     ADRANK_THREADS=8 \
     ADRANK_MAX_CANDIDATES=4096 \
     ADRANK_WARMUP=1 \
     ADRANK_PORT=8000
 
-WORKDIR /workspace/adrankbench
+WORKDIR /workspace/clickrank
 
 # One apt layer. libgomp is what the OpenVINO and ONNX Runtime CPU kernels link
 # against, and OpenVINO is the backend the probe selects on a CPU host, so this
@@ -110,7 +110,7 @@ COPY . .
 # data and results are the two mount points. They are created here so a run with
 # no bind mount still writes somewhere sensible instead of failing, and a run
 # with a bind mount just covers them.
-RUN mkdir -p /workspace/adrankbench/data /workspace/adrankbench/results/serving
+RUN mkdir -p /workspace/clickrank/data /workspace/clickrank/results/serving
 
 # A build time smoke check of the import surface the service depends on. This
 # catches a broken install at build time rather than at the first request. It
