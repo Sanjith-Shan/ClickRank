@@ -48,3 +48,37 @@ in, for example the silent ONNX Runtime CPU fallback in `docs/INFERENCE.md`.
 - **Fix.** `fast_group_auc` in `src/retrieval/metrics.py` uses the rank sum form of AUC inside
   each group in one pandas pass. `tests/test_fast_gauc.py` pins it to the reference to 1e-12,
   including ties and single class groups.
+
+## 2026-09-28. Old checkpoints no longer loaded into the serving path
+
+- **Symptom.** `tests/test_two_stage_serving.py` failed with `tower checkpoint mismatch:
+  missing ['user_feat', 'ad_id_map', 'user_id_map']`.
+- **Found by.** pytest, after the id maps were added to the two tower model.
+- **Cause.** The serving loader rebuilds the model against an extended user table and loads
+  the checkpoint with a strict key check. The new id map buffers were not in older checkpoints,
+  and the user map is one row shorter than the extended table.
+- **Fix.** `_load_tower_with_cold` treats a missing map as the identity it was trained with,
+  and copies the saved user map into the first rows of the extended one.
+
+## 2026-09-28. The laptop shut down under the measurement runs
+
+- **Symptom.** The Mac powered off while the two stage run, the freshness study and another
+  project's benchmarks shared it. The two stage run holds the top 500 ids for 391,741 test
+  users from two indexes at once, a few GB on top of the encoded log.
+- **Found by.** The machine going down, and the partial `results/retrieval/*.jsonl` rows it
+  left behind.
+- **Fix.** Heavy runs now go one at a time through `logs/guard.sh`, which samples free memory,
+  swap and load every 10 s, pauses the job with SIGSTOP when free memory drops below 15% or
+  swap grows by more than 1 GB in a minute, and kills it below 7%. Swap level alone was a
+  false signal, because macOS keeps swap allocated long after pressure passes, so the first
+  version paused a healthy job and never resumed it. The remaining phases reran with
+  `--skip quality`, since the quality rows had already been written.
+
+## 2026-09-28. The Windows box could not run the Python stack
+
+- **Symptom.** `ImportError: DLL load failed ... An Application Control policy has blocked
+  this file` for numpy and then pandas, in a fresh venv on the always on Windows machine.
+- **Found by.** Trying to move ranker training off the laptop.
+- **Cause.** Smart App Control is on and blocks unsigned native extensions.
+- **Fix.** None in this repo. Every run stayed on the Mac. Turning Smart App Control off is a
+  machine wide security change and was left to the owner.

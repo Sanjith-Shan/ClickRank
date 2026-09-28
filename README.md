@@ -10,9 +10,9 @@ Criteo has no user or ad identifiers, so the retrieval stage runs on the Taobao 
 
 **Index.** An IVF index returns 97.2% of the exact top 100 at 1.5 ms per query on one thread, and IVF-PQ holds the whole corpus in 35 MB instead of 217 MB while returning 83% of the exact top 100. Both were timed while other jobs ran, so the clean per request timings are the ones below. The full sweep of flat, IVF, IVF-PQ and HNSW settings is in `NUMBERS.md`.
 
-**Why two stages.** Replaying 300 test day clicks, DeepFM scoring all 846,811 ads puts the clicked ad in its top 50 for 0.3% of requests (median rank 287,069). Retrieving 50 first and ranking only those puts it in the top 50 for 10.0%. A ranker trained on logged impressions has only seen ads some earlier system chose to show, so it cannot order the whole catalog, and retrieval is what fixes that. The impression level metrics, which fall when retrieval is added, and why, are in `DESIGN.md`.
+**Why two stages.** Replaying 1,000 test day clicks, DeepFM scoring all 846,811 ads puts the clicked ad in its top 50 for 0.2% of requests (median rank 311,746). Retrieving 50 first and ranking only those puts it in the top 50 for 9.5%. DCN on a 300 request sample shows the same split, 0.3% against 10.0%. A ranker trained on logged impressions has only seen ads some earlier system chose to show, so it cannot order the whole catalog, and retrieval is what fixes that. The impression level metrics, which fall when retrieval is added, and why, are in `DESIGN.md`.
 
-LATENCY_PARAGRAPH
+**Latency.** Per request on the M3 Pro CPU with one torch thread and one FAISS thread, the two stage path (user tower, HNSW search, candidate features, DeepFM on the candidates) takes 1.28 ms at the median with K = 50 and 2.12 ms with K = 500. Scoring all 846,811 ads with the same DeepFM takes 2,477 ms on one thread and 1,246 ms on all twelve cores, its best case. With exact search instead of HNSW the two stage path is 6.7 to 9.1 ms, almost all of it the brute force search. These ran at a load average near 11 while the machine was otherwise shared, and every row in `results/retrieval/stage_latency.jsonl` records that load.
 
 **Freshness.** The same DeepFM trained on one day of data loses test day AUC steadily with age, from 0.587 one day stale to 0.566 seven days stale (He et al. 2014, Section 5). See Model Freshness below.
 

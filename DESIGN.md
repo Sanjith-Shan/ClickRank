@@ -121,8 +121,10 @@ the clicked ad lands deep in the list. Retrieval removes that problem before ran
 This is the argument for two stages in Covington et al., measured here, and it is why
 candidate generation is judged by recall and ranking by calibrated scores.
 
-The per request sample is 300 clicks, so its percentages carry roughly plus or minus two
-points at the rates observed. `run_two_stage.py --final-rank-requests` raises it.
+The per request sample is 1,000 clicks for DeepFM and 300 for DCN. At 1,000 the two stage
+rate of 9.5% carries about plus or minus 1.8 points (95% interval), and the exhaustive rate
+rests on 2 hits, so it is quoted as a rate and never as a ratio. `run_two_stage.py
+--final-rank-requests` sets the sample.
 
 ## Freshness
 

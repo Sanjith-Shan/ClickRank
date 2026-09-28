@@ -229,9 +229,17 @@ def section_freshness(lines):
         for r in sorted(stale, key=lambda r: r["train_end_day"]):
             auc = r.get("auc", r.get("auc_mean"))
             ne = r.get("ne", r.get("ne_mean"))
-            rel = r.get("ne_rel_to_freshest", r.get("ne_rel_to_freshest_mean"))
-            rel = f"{100 * rel:+.2f}%" if isinstance(rel, float) else ""
+            rel = r.get("ne_rel_to_freshest_pct", r.get("ne_rel_to_freshest_pct_mean"))
+            rel = f"{rel:+.2f}%" if isinstance(rel, float) else ""
             lines.append(f"| {r['train_end_day']} | {r['staleness_days']} | {auc:.4f} | {ne:.4f} | {rel} |")
+        lines.append("")
+    per = latest([r for r in rs if r["experiment"] == "update"], key=lambda r: (r["seed"], r["strategy"]))
+    if per:
+        lines += ["Update strategy. Base model on days 1 to 4, then days 5 to 7 arrive.", "",
+                  "| Seed | Strategy | AUC | NE | Rows trained | Train seconds |", "| --- | --- | --- | --- | --- | --- |"]
+        for r in sorted(per, key=lambda r: (r["seed"], ["none", "warm", "full"].index(r["strategy"]))):
+            lines.append(f"| {r['seed']} | {r['strategy']} | {r['auc']:.4f} | {r['ne']:.4f} | "
+                         f"{r.get('rows_processed', 0):,} | {r.get('train_seconds', 0):.0f} |")
         lines.append("")
     if upd:
         u = upd[-1]
