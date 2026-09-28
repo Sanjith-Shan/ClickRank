@@ -213,6 +213,10 @@ The simulator synthesizes a realistic diurnal traffic curve where demand is low 
 
 Each run reports budget utilization and a smoothness score, defined as the root mean squared error between the realized cumulative spend curve and the ideal traffic proportional curve. The script plots cumulative spend over the day against the ideal pacing line and saves it as a PNG. Smooth pacing matters because it avoids early budget exhaustion, keeps cost per mille stable, and gives the campaign broad time of day coverage instead of a narrow morning burst.
 
+## Model Freshness
+
+`scripts/run_freshness.py` reruns the data freshness experiment of He et al. (ADKDD 2014, Section 5) with the DeepFM ranker on the Taobao log. It trains one model per training day and scores each on day 8 to show how normalised entropy degrades with staleness, then compares no update, a one pass daily warm start and a full retrain by accuracy and by training compute. The protocol and its limits are in the Freshness section of `DESIGN.md`, and results go to `results/retrieval/freshness.jsonl`. Run `python scripts/run_freshness.py --source synthetic --quick` to exercise it in about half a minute without the real data.
+
 ## Quick Start
 
 ```bash
@@ -237,6 +241,7 @@ python scripts/run_inference_benchmark.py  # runtime, precision, and batch size 
 python scripts/run_data_insights.py        # DuckDB analysis over the raw data
 python scripts/serve.py                    # the scoring service
 python scripts/run_load_test.py            # concurrency sweep against the service
+python scripts/run_freshness.py --source taobao --device mps  # model staleness and update strategy
 bash   scripts/sweep.sh                    # the whole benchmark procedure plus the gate
 ```
 

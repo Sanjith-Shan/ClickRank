@@ -67,3 +67,64 @@ the inference runtime comparison are Criteo numbers. No figure blends the two.
 ## The retrieval stage
 
 (Filled in as each part lands. See the sections below.)
+
+## Freshness
+
+The question and the design are from He et al., *Practical Lessons from Predicting Clicks on
+Ads at Facebook*, ADKDD 2014, Section 5. They trained a model on one day of data, scored it
+on each of the following days, and found normalised entropy got steadily worse as the gap
+between training and serving grew. That result is the argument for retraining often. The
+same experiment is rerun here with the DeepFM ranker on the eight day Taobao log, in
+`src/retrieval/freshness.py` and `scripts/run_freshness.py`. It reuses the ranking feature
+spec, the shared trainer, `normalized_entropy` and `fast_group_auc` unchanged.
+
+**Protocol**
+
+- Every model is scored on every impression of day 8, with AUC, NE and GAUC by user.
+- Staleness curve. For each training day d from 1 to 7, a DeepFM is trained from scratch on
+  a seeded sample of `--train-rows` rows from day d alone (`--window-days 1`). Every model
+  gets the same rows count, epochs, batch size and seed, so only recency differs. NE is
+  reported relative to the day 7 model at each staleness 8 minus d.
+- Update strategy. A base model is trained on days 1 to 4 (`--base-days`). Three strategies
+  are then scored on day 8. No update keeps the base model. Warm start fine tunes the base
+  model for one pass on each new day in turn (days 5, 6 and 7), on that day's rows only, with
+  a new Adam optimiser at the ranker's learning rate. Full retrain trains a new model from
+  scratch on days 1 to 7. Warm start's share of the freshness gap is
+  (NE no update minus NE warm) over (NE no update minus NE full). Compute is reported as
+  training rows processed and training wall clock.
+- Rows. For each seed and day a sampler draws a disjoint validation part and a training part
+  of the same size for every day. Every experiment in a seed uses the same rows for the same
+  day, and a multi day set is the union of its days, so each day is sampled at the same rate.
+  Validation rows come from the training days, never from day 8, so no model is selected on
+  the day it is scored on.
+- Features. All models share one encoding, fitted on days 1 to 7, and the test rows'
+  features are frozen at the end of day 7 for every model. What ages is the model, not the
+  serving features. This matches a system whose feature store is current and whose model push
+  is late.
+- Unseen ids. Because the vocabulary spans days 1 to 7, a model trained on day 2 has
+  embedding rows for ids that first appear on day 6. Those rows never get a gradient. After
+  every training step the embedding and first order rows of every code the model has not
+  trained on are set to zero, so an unseen id adds nothing, the same rule the two tower
+  retriever uses. A warm started model accumulates the codes it has seen, and codes new on a
+  fine tune day start from zero and are trained.
+- Seeds. The update comparison runs on seeds 0 and 1 by default, the staleness curve on seed
+  0 (`--stale-seeds` adds more). Every row is written with its seed, and a summary row holds
+  the mean and standard deviation across seeds.
+
+**What this does not claim**
+
+- It is not a reproduction of He et al.'s numbers. Their models were boosted trees feeding a
+  logistic regression, trained on Facebook's traffic. This is DeepFM on eight public days of
+  Taobao display ads, one test day, and a staleness range of one to seven days.
+- One test day and two seeds give a noisy estimate. A staleness difference smaller than the
+  spread across seeds is not evidence of anything.
+- The feature scaling constants and the index each id gets come from days 1 to 7 for every
+  model. No label reaches a model through them, but a stale model is not fully blind to the
+  later days' id sets. The unseen id rule above is what removes their effect on scores.
+- Warm start compute is the sum over all its updates, while full retrain is charged for its
+  single final run, which is conservative for warm start. The daily schedule figure, where
+  full retrain would run on every new day, is counted in rows and not measured in seconds.
+  Neither is a FLOP count. Wall clock is from the machine and load stamped on each row.
+- Fine tuning uses one learning rate and one pass. Another learning rate, replayed older
+  rows or online learning at finer grain than a day could all change the answer and were not
+  tried.
