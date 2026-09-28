@@ -8,3 +8,4 @@ pytest>=7.0
 onnx>=1.15
 onnxruntime>=1.17
 openvino>=2024.0
+faiss-cpu>=1.8

@@ -38,6 +38,12 @@ results/*.pth
 results/*.pkl
 results/*.onnx
 results/*.onnx.data
+# Retrieval artifacts: tower weights, corpus embeddings and FAISS indexes.
+# Embeddings are derived from the dataset, so they stay local like the rows.
+results/**/*.npy
+results/**/*.npz
+results/**/*.faiss
+results/**/artifacts/
 
 # Serialized TensorRT engines. These are hundreds of megabytes and are tied to
 # the gpu architecture, the driver, and the TensorRT version that built them, so
