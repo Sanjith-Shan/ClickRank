@@ -53,6 +53,10 @@ def main() -> None:
     ap.add_argument("--no-logq", action="store_true", help="switch off the sampling bias correction")
     ap.add_argument("--eval-users", type=int, default=20000)
     ap.add_argument("--tag", default="", help="suffix for an ablation run, keeps artifacts apart")
+    ap.add_argument("--val-day", type=int, default=None,
+                    help="hold this training day out for selection; no test day numbers are written")
+    ap.add_argument("--id-dim", type=int, default=32)
+    ap.add_argument("--weight-decay", type=float, default=0.0)
     args = ap.parse_args()
 
     t0 = time.time()
@@ -78,6 +82,8 @@ def main() -> None:
     device = get_device(args.device)
     cfg = tt.TrainConfig(
         embed_dim=args.embed_dim,
+        id_dim=args.id_dim,
+        weight_decay=args.weight_decay,
         history_len=args.history_len,
         use_history=not args.no_history,
         temperature=args.temperature,
@@ -88,12 +94,19 @@ def main() -> None:
         eval_users=args.eval_users,
     )
     print(f"device {device}, config {cfg}")
-    model, hist, curve = tt.train(enc, cfg, device)
+    model, hist, curve = tt.train(enc, cfg, device, val_day=args.val_day)
     variant = args.tag or "main"
+    curve_file = "two_tower_selection.jsonl" if args.val_day else "two_tower_curve.jsonl"
     for row in curve:
-        record.write(os.path.join(out, "two_tower_curve.jsonl"),
-                     {"variant": variant, "config": cfg.__dict__, "device": str(device), **row},
+        record.write(os.path.join(out, curve_file),
+                     {"variant": variant, "config": cfg.__dict__, "device": str(device),
+                      "protocol": (f"train days 1..{args.val_day - 1}, validate day {args.val_day}"
+                                   if args.val_day else "train days 1..7, test day 8 logged, not used to select"),
+                      **row},
                      dataset=label)
+    if args.val_day:
+        print("selection run: no test day artifacts written")
+        return
 
     # Export every corpus ad once. This is the candidate corpus for M2.
     t2 = time.time()

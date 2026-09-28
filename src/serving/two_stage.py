@@ -260,6 +260,10 @@ def _load_tower_with_cold(art: str, enc):
     cfg = ck["config"]
     state = dict(ck["state_dict"])
     saved_users = state.pop("user_feat")
+    # The id maps arrived after the first checkpoints. An old checkpoint has
+    # none, which is the identity map it was trained with. The user map is one
+    # row short of the extended table, so it is copied in rather than loaded.
+    saved_user_map = state.pop("user_id_map", None)
     if not torch.equal(saved_users, torch.as_tensor(enc.user_feat[:-1], dtype=torch.long)):
         raise RuntimeError("the checkpoint's user table does not match the rebuilt encoder, "
                            "so the artifacts and the data disagree")
@@ -267,8 +271,11 @@ def _load_tower_with_cold(art: str, enc):
                              embed_dim=cfg["embed_dim"], id_dim=cfg["id_dim"], small_dim=cfg["small_dim"],
                              hidden=cfg["hidden"], use_history=cfg["use_history"])
     missing, unexpected = m.load_state_dict(state, strict=False)
-    if unexpected or [k for k in missing if k != "user_feat"]:
+    if unexpected or [k for k in missing if k not in ("user_feat", "user_id_map", "ad_id_map")]:
         raise RuntimeError(f"tower checkpoint mismatch: missing {missing}, unexpected {unexpected}")
+    if saved_user_map is not None:
+        with torch.no_grad():
+            m.user_id_map[: len(saved_user_map)] = saved_user_map
     return m.eval(), cfg
 
 

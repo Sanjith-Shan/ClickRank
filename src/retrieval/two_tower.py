@@ -122,12 +122,19 @@ class TwoTowerRetriever(nn.Module):
         self.register_buffer("ad_feat", torch.as_tensor(ad_feat, dtype=torch.long))
         self.register_buffer("user_feat", torch.as_tensor(user_feat, dtype=torch.long))
 
+        # Index 0 is the out of vocabulary code in every field. padding_idx keeps
+        # it a zero vector with no gradient, so an unknown value adds nothing.
         self.ad_emb = nn.ModuleList(
-            nn.Embedding(v, _emb_dim(v, id_dim, small_dim)) for v in ad_vocab_sizes
+            nn.Embedding(v, _emb_dim(v, id_dim, small_dim), padding_idx=0) for v in ad_vocab_sizes
         )
         self.user_emb = nn.ModuleList(
-            nn.Embedding(v, _emb_dim(v, id_dim, small_dim)) for v in user_vocab_sizes
+            nn.Embedding(v, _emb_dim(v, id_dim, small_dim), padding_idx=0) for v in user_vocab_sizes
         )
+        # An id with no training click never receives a gradient, so its own row
+        # would stay at its random initial value. These maps send such ids to the
+        # zero out of vocabulary row instead. Identity until set_id_maps is called.
+        self.register_buffer("ad_id_map", torch.arange(ad_vocab_sizes[0], dtype=torch.long))
+        self.register_buffer("user_id_map", torch.arange(user_vocab_sizes[0], dtype=torch.long))
         ad_in = sum(e.embedding_dim for e in self.ad_emb)
         hist_in = sum(self.ad_emb[c].embedding_dim for c in HISTORY_AD_COLS) if use_history else 0
         user_in = sum(e.embedding_dim for e in self.user_emb) + hist_in
@@ -135,11 +142,21 @@ class TwoTowerRetriever(nn.Module):
         self.user_tower = _Tower(user_in, hidden, embed_dim)
         for e in list(self.ad_emb) + list(self.user_emb):
             nn.init.normal_(e.weight, std=0.05)
+            with torch.no_grad():
+                e.weight[0].zero_()
+
+    def set_id_maps(self, ad_codes_with_clicks: np.ndarray, user_codes_with_clicks: np.ndarray) -> None:
+        """Keep an id's own embedding only if it has at least one training click."""
+        for buf, codes in ((self.ad_id_map, ad_codes_with_clicks), (self.user_id_map, user_codes_with_clicks)):
+            keep = torch.zeros(len(buf), dtype=torch.bool, device=buf.device)
+            keep[torch.as_tensor(np.unique(codes), dtype=torch.long, device=buf.device)] = True
+            buf.copy_(torch.where(keep, torch.arange(len(buf), device=buf.device), torch.zeros_like(buf)))
 
     # -- ad side ---------------------------------------------------------
     def ad_input(self, ad_rows: torch.Tensor) -> torch.Tensor:
         f = self.ad_feat[ad_rows]
-        return torch.cat([emb(f[:, i]) for i, emb in enumerate(self.ad_emb)], dim=-1)
+        cols = [self.ad_id_map[f[:, 0]]] + [f[:, i] for i in range(1, f.shape[1])]
+        return torch.cat([emb(c) for emb, c in zip(self.ad_emb, cols)], dim=-1)
 
     def encode_ads(self, ad_rows: torch.Tensor) -> torch.Tensor:
         return self.ad_tower(self.ad_input(ad_rows))
@@ -150,13 +167,14 @@ class TwoTowerRetriever(nn.Module):
         mask = (hist > 0).float()
         rows = (hist - 1).clamp(min=0)
         f = self.ad_feat[rows]  # (B, L, 6)
-        parts = [self.ad_emb[c](f[..., c]) for c in HISTORY_AD_COLS]
+        parts = [self.ad_emb[c](self.ad_id_map[f[..., c]] if c == 0 else f[..., c]) for c in HISTORY_AD_COLS]
         e = torch.cat(parts, dim=-1) * mask.unsqueeze(-1)
         return e.sum(dim=1) / mask.sum(dim=1, keepdim=True).clamp(min=1.0)
 
     def encode_users(self, user_rows: torch.Tensor, hist: Optional[torch.Tensor]) -> torch.Tensor:
         f = self.user_feat[user_rows]
-        parts = [emb(f[:, i]) for i, emb in enumerate(self.user_emb)]
+        cols = [self.user_id_map[f[:, 0]]] + [f[:, i] for i in range(1, f.shape[1])]
+        parts = [emb(c) for emb, c in zip(self.user_emb, cols)]
         if self.use_history:
             parts.append(self.history_vector(hist))
         return self.user_tower(torch.cat(parts, dim=-1))
@@ -187,9 +205,15 @@ def _set_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def training_pairs(enc: Encoded, hist: ClickHistory, history_len: int):
-    """(user rows, ad rows, histories) for every training click, in time order."""
+def training_pairs(enc: Encoded, hist: ClickHistory, history_len: int, before_day: Optional[int] = None):
+    """(user rows, ad rows, histories) for every training click, in time order.
+
+    before_day, when set, keeps only clicks from earlier days, which is how the
+    validation protocol holds the last training day out.
+    """
     m = enc.split_mask("train") & (enc.imp_clk == 1)
+    if before_day is not None:
+        m &= enc.imp_day < before_day
     order = np.argsort(enc.imp_ts[m], kind="stable")
     users = enc.imp_user[m][order]
     ads = enc.imp_ad[m][order]
@@ -199,14 +223,16 @@ def training_pairs(enc: Encoded, hist: ClickHistory, history_len: int):
 
 
 def test_queries(enc: Encoded, hist: ClickHistory, history_len: int, max_users: Optional[int] = None,
-                 seed: int = 0):
+                 seed: int = 0, day: Optional[int] = None, cutoff: Optional[int] = None):
     """One query per test day user with at least one click.
 
     Returns user rows, their frozen histories, and for each user the set of
     corpus rows they clicked on the test day. The history is as of the end of
     the training days for every query.
     """
-    m = enc.split_mask("test") & (enc.imp_clk == 1)
+    day = enc.test_day if day is None else day
+    cutoff = enc.cutoff_ts if cutoff is None else cutoff
+    m = (enc.imp_day == day) & (enc.imp_clk == 1)
     u = enc.imp_user[m]
     a = enc.imp_ad[m]
     users = np.unique(u)
@@ -219,7 +245,7 @@ def test_queries(enc: Encoded, hist: ClickHistory, history_len: int, max_users: 
     u, a = u[order], a[order]
     bounds = np.searchsorted(u, users, side="left"), np.searchsorted(u, users, side="right")
     clicked = [np.unique(a[s:e]) for s, e in zip(*bounds)]
-    h = hist.history(users, np.full(len(users), enc.cutoff_ts), history_len)
+    h = hist.history(users, np.full(len(users), cutoff), history_len)
     return users, h, clicked
 
 
@@ -274,11 +300,27 @@ def train(
     cfg: TrainConfig,
     device: torch.device,
     log=print,
+    val_day: Optional[int] = None,
 ) -> tuple:
-    """Train the two tower model. Returns (model, history object, curve)."""
+    """Train the two tower model. Returns (model, history object, curve).
+
+    Two protocols. With val_day set, clicks from val_day onwards are held out,
+    the history is frozen at the start of val_day, the curve is measured on
+    val_day, and the weights from the best validation epoch are kept. That is
+    the run hyperparameters and the epoch count are chosen on. With val_day
+    None the model trains on every training day for exactly cfg.epochs, and
+    the curve on the test day is logged for information only, never used to
+    pick anything.
+    """
     _set_seed(cfg.seed)
-    hist = ClickHistory(enc)
-    users, ads, h = training_pairs(enc, hist, cfg.history_len)
+    if val_day is not None:
+        cutoff = int(enc.imp_ts[enc.imp_day == val_day].min())
+        hist = ClickHistory(enc, max_ts=cutoff)
+        users, ads, h = training_pairs(enc, hist, cfg.history_len, before_day=val_day)
+    else:
+        cutoff = enc.cutoff_ts
+        hist = ClickHistory(enc)
+        users, ads, h = training_pairs(enc, hist, cfg.history_len)
     n = len(users)
     log(f"training clicks {n:,}, corpus ads {enc.n_ads:,}, user rows {enc.n_user_rows:,}")
 
@@ -287,12 +329,16 @@ def train(
         embed_dim=cfg.embed_dim, id_dim=cfg.id_dim, small_dim=cfg.small_dim,
         hidden=cfg.hidden, use_history=cfg.use_history,
     ).to(device)
+    model.set_id_maps(enc.ad_feat[np.unique(ads), 0], enc.user_feat[np.unique(users), 0])
     opt = torch.optim.Adam(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
     est = StreamingFrequencyEstimator()
 
     eval_set = None
     if cfg.eval_every_epoch:
-        eval_set = test_queries(enc, hist, cfg.history_len, max_users=cfg.eval_users, seed=cfg.seed)
+        eval_set = test_queries(enc, hist, cfg.history_len, max_users=cfg.eval_users, seed=cfg.seed,
+                                day=val_day, cutoff=cutoff)
+    split = "val" if val_day is not None else "test_info_only"
+    best = (-1.0, None, -1)
 
     curve = []
     rng = np.random.default_rng(cfg.seed)
@@ -337,9 +383,15 @@ def train(
             corpus = embed_corpus(model, enc.n_ads, device)
             uvecs = embed_users(model, eu, eh, device)
             hr = exact_hit_rate(uvecs, corpus, ecl, ks=(cfg.eval_k,))
-            row[f"test_hit_rate@{cfg.eval_k}"] = hr[cfg.eval_k]
+            row[f"{split}_hit_rate@{cfg.eval_k}"] = hr[cfg.eval_k]
+            if val_day is not None and hr[cfg.eval_k] > best[0]:
+                best = (hr[cfg.eval_k], {k: v.detach().cpu().clone() for k, v in model.state_dict().items()},
+                        epoch)
         log(" ".join(f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}" for k, v in row.items()))
         curve.append(row)
+    if val_day is not None and best[1] is not None:
+        model.load_state_dict(best[1])
+        log(f"best validation epoch {best[2]} hit_rate@{cfg.eval_k}={best[0]:.4f}")
     model.eval()
     return model, hist, curve
 
