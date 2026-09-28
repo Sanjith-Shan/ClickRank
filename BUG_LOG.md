@@ -82,3 +82,14 @@ in, for example the silent ONNX Runtime CPU fallback in `docs/INFERENCE.md`.
 - **Cause.** Smart App Control is on and blocks unsigned native extensions.
 - **Fix.** None in this repo. Every run stayed on the Mac. Turning Smart App Control off is a
   machine wide security change and was left to the owner.
+
+## 2026-09-28. The Criteo download only ever worked on macOS
+
+- **Symptom.** On a Linux GPU box `scripts/download_data.sh` printed "could not download a
+  Criteo sample from the mirror" and left no data, although the figshare mirror answered.
+- **Found by.** Running it on the A100 pod for the TorchRec run, then streaming the tarball by
+  hand, which listed its members fine.
+- **Cause.** The script extracts `'*train.txt'` from the stream. bsdtar on macOS treats that as
+  a glob, GNU tar does not unless given `--wildcards`, so on Linux it matched nothing and the
+  errors went to /dev/null.
+- **Fix.** The script passes `--wildcards` when the installed tar is GNU tar.

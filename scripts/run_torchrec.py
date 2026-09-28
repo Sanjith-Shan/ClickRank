@@ -45,6 +45,9 @@ from src.train.config import SEED, get_config  # noqa: E402
 from src.train.trainer import _build_cat_tensor, set_seed  # noqa: E402
 
 
+DATASET = "criteo"
+
+
 def machine() -> dict:
     import torchrec
 
@@ -66,7 +69,7 @@ def machine() -> dict:
 
 
 def write(path: str, row: dict) -> None:
-    row = {"when": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "dataset": "criteo", **row}
+    row = {"when": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "dataset": DATASET, **row}
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(row) + "\n")
     print(json.dumps(row)[:300])
@@ -107,6 +110,7 @@ def main() -> None:
     ap.add_argument("--sample-size", type=int, default=2_000_000)
     ap.add_argument("--output", default="results/gpu_a100_dlrm")
     ap.add_argument("--batch-sizes", default="256,1024,4096,16384")
+    ap.add_argument("--synthetic", action="store_true", help="smoke test on generated rows")
     args = ap.parse_args()
 
     import torch.distributed as dist
@@ -114,14 +118,17 @@ def main() -> None:
     from torchrec.distributed.planner import EmbeddingShardingPlanner, Topology
     from torchrec.distributed.embeddingbag import EmbeddingBagCollectionSharder
 
-    from src.data.loader import load_raw
+    from src.data.loader import generate_synthetic, load_raw
 
+    global DATASET
+    DATASET = "SYNTHETIC" if args.synthetic else "criteo"
     set_seed(SEED)
     dev = torch.device("cuda")
     out = os.path.join(args.output, "torchrec.jsonl")
     mach = machine()
 
-    df = load_raw(args.data_path, sample_size=args.sample_size)
+    df = (generate_synthetic(args.sample_size, seed=SEED) if args.synthetic
+          else load_raw(args.data_path, sample_size=args.sample_size))
     train_df, val_df, test_df = temporal_split(df)
     _, _, test_ds, meta = build_datasets(train_df, val_df, test_df)
     y = np.asarray(test_ds.label, dtype=np.float64).reshape(-1)

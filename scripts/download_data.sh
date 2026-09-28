@@ -45,7 +45,14 @@ echo "this downloads roughly 1 GB for a few million rows and can take a few minu
 
 # Stream the gzip, extract only train.txt to stdout, keep the first ROWS lines.
 # head closes the pipe after ROWS lines which stops the download early.
-curl -sL "${URL}" 2>/dev/null | tar -xzO '*train.txt' 2>/dev/null | head -n "${ROWS}" > "${OUT_FILE}"
+# GNU tar only matches a glob with --wildcards, and bsdtar on macOS rejects that
+# flag, so pick the form the installed tar understands.
+if tar --version 2>/dev/null | grep -q "GNU tar"; then
+  TAR_GLOB=(--wildcards '*train.txt')
+else
+  TAR_GLOB=('*train.txt')
+fi
+curl -sL "${URL}" 2>/dev/null | tar -xzO "${TAR_GLOB[@]}" 2>/dev/null | head -n "${ROWS}" > "${OUT_FILE}"
 
 GOT=$(wc -l < "${OUT_FILE}" 2>/dev/null | tr -d ' ')
 if [ "${GOT:-0}" -ge 1 ]; then
